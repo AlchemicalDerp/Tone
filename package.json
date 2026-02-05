@@ -1,0 +1,10 @@
+{
+  "name": "tone",
+  "private": true,
+  "workspaces": ["server", "web", "shared"],
+  "scripts": {
+    "build": "npm run -w shared build && npm run -w server build && npm run -w web build",
+    "dev": "npm run -w server dev",
+    "test": "npm run -w server test"
+  }
+}

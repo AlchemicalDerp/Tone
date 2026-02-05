@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+enum Role {
+  admin
+  user
+}
+
+enum TrackArtistRole {
+  primary
+  featured
+}
+
+model User {
+  id              String      @id @default(cuid())
+  email           String      @unique
+  passwordHash    String
+  role            Role        @default(user)
+  displayName     String
+  avatarUrl       String?
+  isDisabled      Boolean     @default(false)
+  isPublicProfile Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  lastLoginAt     DateTime?
+  settings        UserSetting?
+  sessions        Session[]
+  playlists       Playlist[]
+  playEvents      PlayEvent[]
+  auditLogs       AuditLog[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  targetType  String?
+  targetId    String?
+  meta        Json?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Track {
+  id         String        @id @default(cuid())
+  title      String
+  durationMs Int
+  year       Int?
+  trackNo    Int?
+  discNo     Int?
+  bitrate    Int?
+  codec      String?
+  path       String        @unique
+  fileHash   String
+  addedAt    DateTime      @default(now())
+  albumId    String?
+  coverArtId String?
+  album      Album?        @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  coverArt   CoverArt?     @relation(fields: [coverArtId], references: [id], onDelete: SetNull)
+  artists    TrackArtist[]
+  genres     TrackGenre[]
+  playlists  PlaylistTrack[]
+  playEvents PlayEvent[]
+
+  @@index([fileHash, durationMs])
+}
+
+model Artist {
+  id         String       @id @default(cuid())
+  name       String       @unique
+  trackLinks TrackArtist[]
+  albums     Album[]      @relation("AlbumArtist")
+}
+
+model Album {
+  id            String      @id @default(cuid())
+  title         String
+  year          Int?
+  albumArtistId String?
+  coverArtId    String?
+  albumArtist   Artist?     @relation("AlbumArtist", fields: [albumArtistId], references: [id], onDelete: SetNull)
+  coverArt      CoverArt?   @relation(fields: [coverArtId], references: [id], onDelete: SetNull)
+  tracks        Track[]
+
+  @@unique([title, year, albumArtistId])
+}
+
+model Genre {
+  id     String      @id @default(cuid())
+  name   String      @unique
+  tracks TrackGenre[]
+}
+
+model TrackArtist {
+  trackId  String
+  artistId String
+  role     TrackArtistRole @default(primary)
+  track    Track           @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  artist   Artist          @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([trackId, artistId, role])
+}
+
+model TrackGenre {
+  trackId String
+  genreId String
+  track   Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([trackId, genreId])
+}
+
+model Playlist {
+  id          String          @id @default(cuid())
+  ownerId     String
+  name        String
+  isPublic    Boolean         @default(false)
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  owner       User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tracks      PlaylistTrack[]
+}
+
+model PlaylistTrack {
+  playlistId String
+  trackId    String
+  position   Int
+  addedAt    DateTime @default(now())
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, trackId])
+  @@unique([playlistId, position])
+}
+
+model PlayEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  trackId   String
+  startedAt DateTime
+  endedAt   DateTime?
+  msPlayed  Int
+  context   String
+  contextId String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+}
+
+model UserSetting {
+  userId                String  @id
+  eqBass                Float   @default(0)
+  eqTreble              Float   @default(0)
+  volume                Float   @default(0.8)
+  theme                 String  @default("dark")
+  lastPlayedTrackId     String?
+  lastPlayedPositionMs  Int?
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoverArt {
+  id        String   @id @default(cuid())
+  path      String
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+  tracks    Track[]
+  albums    Album[]
+}
+
+model LibraryPath {
+  id        String   @id @default(cuid())
+  path      String   @unique
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ScanJob {
+  id          String   @id @default(cuid())
+  status      String   @default("queued")
+  totalFiles  Int      @default(0)
+  scanned     Int      @default(0)
+  imported    Int      @default(0)
+  duplicates  Int      @default(0)
+  errors      Int      @default(0)
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+}
+
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  email      String
+  ipAddress  String
+  success    Boolean
+  createdAt  DateTime @default(now())
+}

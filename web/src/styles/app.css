@@ -1,0 +1,14 @@
+:root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+body { margin: 0; background: #0f1115; color: #e8e9ea; }
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; padding-bottom: 80px; }
+aside { border-right: 1px solid #2a2f3a; padding: 16px; }
+nav { display: flex; flex-direction: column; gap: 10px; }
+a { color: #d1d9ff; text-decoration: none; }
+main { padding: 18px; overflow: auto; }
+.player-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #171b23; border-top: 1px solid #2a2f3a; padding: 10px; display: flex; gap: 8px; align-items: center; }
+.progress { width: 220px; height: 8px; background: #2a2f3a; }
+.progress > div { height: 8px; background: #6b89ff; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #2a2f3a; }
+.card { max-width: 360px; margin: 120px auto; display: flex; flex-direction: column; gap: 12px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
