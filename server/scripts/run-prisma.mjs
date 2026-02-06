@@ -40,11 +40,39 @@ if (args.length === 0) {
   process.exit(1);
 }
 
-const prismaCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-const result = spawnSync(prismaCmd, ['prisma', ...args], {
-  stdio: 'inherit',
-  env: process.env,
-  cwd,
-});
+const localPrisma = path.join(cwd, 'node_modules', '.bin', process.platform === 'win32' ? 'prisma.cmd' : 'prisma');
+const attempts = fs.existsSync(localPrisma)
+  ? [
+      { cmd: localPrisma, cmdArgs: args, shell: false, label: 'local prisma binary' },
+      { cmd: 'npx prisma', cmdArgs: args, shell: true, label: 'npx prisma fallback' },
+    ]
+  : [{ cmd: 'npx prisma', cmdArgs: args, shell: true, label: 'npx prisma' }];
 
-process.exit(result.status ?? 1);
+let finalStatus = 1;
+for (const attempt of attempts) {
+  const escapedArgs = attempt.cmdArgs.map((a) => (a.includes(' ') ? `\"${a}\"` : a));
+  const result = attempt.shell
+    ? spawnSync(`${attempt.cmd} ${escapedArgs.join(' ')}`, {
+        stdio: 'inherit',
+        env: process.env,
+        cwd,
+        shell: true,
+      })
+    : spawnSync(attempt.cmd, attempt.cmdArgs, {
+        stdio: 'inherit',
+        env: process.env,
+        cwd,
+        shell: false,
+      });
+
+  if (result.error) {
+    console.error(`[prisma-wrapper] Failed to run via ${attempt.label}: ${result.error.message}`);
+    finalStatus = 1;
+    continue;
+  }
+
+  finalStatus = result.status ?? 1;
+  if (finalStatus === 0) break;
+}
+
+process.exit(finalStatus);
