@@ -87,6 +87,13 @@ Override by setting in environment:
 
 ## Native Run (Ubuntu/Linux)
 
+
+### Prisma generate note (Windows compatibility)
+If you hit `P1012` mentioning the `extensions` datasource property, update to this version of the repo (the schema no longer uses datasource `extensions`) and run migrations to create `pg_trgm` via SQL:
+```bash
+npm run -w server prisma:migrate
+```
+
 ```bash
 # from repo root
 npm install
