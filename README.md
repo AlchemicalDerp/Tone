@@ -88,8 +88,10 @@ Override by setting in environment:
 ## Native Run (Ubuntu/Linux)
 
 
-### Prisma generate note (Windows compatibility)
-If you hit `P1012` mentioning the `extensions` datasource property, update to this version of the repo (the schema no longer uses datasource `extensions`) and run migrations to create `pg_trgm` via SQL:
+### Prisma migrate note (Windows compatibility)
+If you run Prisma commands without `server/.env`, scripts now auto-load `server/.env.example` as a fallback so `DATABASE_URL` is present. For real deployments, create `server/.env` and set your own DB URL.
+
+If you hit `P1012` mentioning datasource `extensions`, update to this repo version (schema no longer uses datasource `extensions`) and run:
 ```bash
 npm run -w server prisma:migrate
 ```
