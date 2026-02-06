@@ -1,6 +1,6 @@
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     ...init,
     credentials: 'include',
