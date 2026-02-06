@@ -38,7 +38,7 @@ export function generateCsrfToken() {
 }
 
 export default fp(async (app) => {
-  app.decorateRequest('user', null);
+  (app as any).decorateRequest('user', null);
 
   app.addHook('preHandler', async (req) => {
     const sessionToken = req.cookies[SESSION_COOKIE];

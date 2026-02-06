@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { parseFile } from 'music-metadata';
+import { parseBuffer } from 'music-metadata';
 import sharp from 'sharp';
 import { prisma } from '../lib/prisma.js';
 import { hashFile } from '../utils/hash.js';
@@ -40,7 +40,8 @@ export class ScannerService {
       const file = files[i]!;
       try {
         const hash = await hashFile(file);
-        const metadata = await parseFile(file);
+        const fileData = await fs.readFile(file);
+        const metadata = await parseBuffer(fileData, undefined, { duration: true });
         const durationMs = Math.round((metadata.format.duration || 0) * 1000);
         const existing = await prisma.track.findFirst({ where: { fileHash: hash, durationMs } });
         if (existing) {

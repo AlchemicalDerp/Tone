@@ -28,7 +28,7 @@ export const playlistRoutes: FastifyPluginAsync = async (app) => {
     const params = z.object({ id: z.string().cuid() }).parse(req.params);
     const body = z.object({ trackIds: z.array(z.string().cuid()) }).parse(req.body);
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       for (let i = 0; i < body.trackIds.length; i += 1) {
         await tx.playlistTrack.update({
           where: { playlistId_trackId: { playlistId: params.id, trackId: body.trackIds[i]! } },

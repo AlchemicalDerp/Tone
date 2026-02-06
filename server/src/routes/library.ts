@@ -40,7 +40,7 @@ export const libraryRoutes: FastifyPluginAsync = async (app) => {
     const body = z.object({ title: z.string().optional(), year: z.number().optional(), genres: z.array(z.string()).optional() }).parse(req.body);
 
     if (body.genres) {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         await tx.trackGenre.deleteMany({ where: { trackId: params.id } });
         for (const g of body.genres!) {
           const genre = await tx.genre.upsert({ where: { name: g }, update: {}, create: { name: g } });
@@ -56,7 +56,7 @@ export const libraryRoutes: FastifyPluginAsync = async (app) => {
     await requireAuth(req);
     const body = z.object({ trackIds: z.array(z.string().cuid()).min(1), genres: z.array(z.string()).min(1), mode: z.enum(['set', 'append']) }).parse(req.body);
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       for (const trackId of body.trackIds) {
         if (body.mode === 'set') {
           await tx.trackGenre.deleteMany({ where: { trackId } });
