@@ -1,0 +1,46 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tone
+      POSTGRES_PASSWORD: tone
+      POSTGRES_DB: tone
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - server/.env.example
+    environment:
+      DATABASE_URL: postgresql://tone:tone@postgres:5432/tone?schema=public
+      NODE_ENV: production
+      TRUST_PROXY: '1'
+    depends_on:
+      - postgres
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./media:/app/media
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000/api
+    depends_on:
+      - server
+    ports:
+      - '5173:80'
+
+volumes:
+  pg_data:
